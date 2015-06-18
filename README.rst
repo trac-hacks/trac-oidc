@@ -60,7 +60,7 @@ use this plugin.
    the **Credentials** page) to download a JSON file containing the
    required client secrets.  Save this file to somewhere where trac
    can read it.  By default, the plugin looks for this file under the
-   name ``client_secrets.json`` in the ``conf`` subdirectory of the
+   name ``client_secret.json`` in the ``conf`` subdirectory of the
    trac environment, however this can be configured.  (Since the file
    contains sensitive information, consider setting the file
    permissions so that not just anybody can read it.)
@@ -89,10 +89,10 @@ In your ``trac.ini``::
   [trac_oidc]
 
   # Optional: Specify the path to the client secrets JSON file.
-  # The default is ``client_secrets.json``.  Relative paths are
+  # The default is ``client_secret.json``.  Relative paths are
   # interpreted relative to the ``conf`` subdirectory of the trac
   # environment (i.e. alongside ``trac.ini``.)
-  client_secrets_file = /path/to/client_secrets.json
+  client_secret_file = /path/to/client_secret.json
 
   [openid]
 

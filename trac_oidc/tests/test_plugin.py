@@ -151,9 +151,9 @@ class TestOidcPlugin(object):
             'client_secret': "SEKRET",
             'redirect_uris': [redirect_url],
             }
-        secrets_file = tmpdir.join('client_secrets.json')
-        secrets_file.write(json.dumps({'web': web_secrets}))
-        env.config.set('trac_oidc', 'client_secrets_file', str(secrets_file))
+        secret_file = tmpdir.join('client_secret.json')
+        secret_file.write(json.dumps({'web': web_secrets}))
+        env.config.set('trac_oidc', 'client_secret_file', str(secret_file))
 
         flow = plugin._get_oauth2_flow(req)
 

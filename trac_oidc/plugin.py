@@ -44,9 +44,9 @@ class OidcPlugin(LoginModule):
 
     # implements(IAuthenticator, INavigationContributor, IRequestHandler)
 
-    client_secrets_file = PathOption(
-        'trac_oidc', 'client_secrets_file', 'client_secrets.json',
-        """Path to client_secrets file.  Relative paths are interpreted
+    client_secret_file = PathOption(
+        'trac_oidc', 'client_secret_file', 'client_secret.json',
+        """Path to client_secret file.  Relative paths are interpreted
         relative to the ``conf`` subdirectory of the trac environment.""")
 
     # deprecated
@@ -110,12 +110,12 @@ class OidcPlugin(LoginModule):
         """ Get an ``oauth2client`` “flow” instance.
         """
         conf_dir = os.path.join(self.env.path, 'conf')
-        client_secrets = os.path.join(conf_dir, self.client_secrets_file)
+        client_secret = os.path.join(conf_dir, self.client_secret_file)
         redirect_uri = req.abs_href.trac_oidc('redirect')
         openid_realm = self._get_openid_realm(req)
         self.log.debug('openid_realm = %r', openid_realm)
 
-        flow = flow_from_clientsecrets(client_secrets,
+        flow = flow_from_clientsecrets(client_secret,
                                        scope='openid email',
                                        redirect_uri=redirect_uri)
         flow.params.update({
