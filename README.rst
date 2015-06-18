@@ -1,6 +1,6 @@
-=========
-Trac-oidc
-=========
+========================
+Trac-oidc |build status|
+========================
 
 ***********
 Description
@@ -138,3 +138,6 @@ Authors
 .. _oauth2client: https://pypi.python.org/pypi/oauth2client
 .. _google developers console: https://console.developers.google.com/
 .. _pypi: https://pypi.python.org/pypi/trac-oidc
+.. |build status| image::
+    https://travis-ci.org/dairiki/trac-oidc.svg?branch=master
+    :target: https://travis-ci.org/dairiki/trac-oidc
