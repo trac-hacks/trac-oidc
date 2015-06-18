@@ -1,3 +1,6 @@
 *~
-/trac_auth_oauth2.egg-info/
 *.pyc
+/trac_oidc.egg-info/
+/.tox/
+/.coverage
+/htmlcov/

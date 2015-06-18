@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
 VERSION = '0.1.dev0'
 
@@ -10,13 +12,40 @@ README = open(os.path.join(here, 'README.rst')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.rst')).read()
 
 requires = [
-    'sanction',
+    'trac',
+    'oauth2client',
     ]
 
+tests_require = [
+    'pytest',
+    'pytest-capturelog',
+    'Mock',
+    ]
+
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
+
+
 setup(
-    name='trac-auth-oauth2',
+    name='trac-oidc',
     version=VERSION,
-    description='Oauth2 authentication for Trac',
+    description='OpenID Connect authentication for Trac',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -31,14 +60,20 @@ setup(
     license='Trac license (BSD-like)',
     author='Jeff Dairiki',
     author_email='dairiki@dairiki.org',
-    url='https://github.com/dairiki/trac-auth-oauth2',
+    url='https://github.com/dairiki/trac-oidc',
 
-    packages=['trac_auth_oauth2'],
+    packages=['trac_oidc'],
     include_package_data=True,
+    zip_safe=True,
+
     install_requires=requires,
     entry_points={
         'trac.plugins': [
-            'trac_auth_oauth2 = trac_auth_oauth2',
+            'trac_oidc = trac_oidc.plugin',
             ],
         },
+
+    tests_require=tests_require,
+    cmdclass={'test': PyTest},
+    extras_require={'testing': tests_require},
     )
