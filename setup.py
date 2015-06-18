@@ -5,7 +5,7 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-VERSION = '0.1.dev0'
+VERSION = '0.1.1'
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
@@ -48,13 +48,13 @@ setup(
     description='OpenID Connect authentication for Trac',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Plugins",
         "Environment :: Web Environment",
         "Framework :: Trac",
         "Intended Audience :: System Administrators",
         "Topic :: Internet :: WWW/HTTP",
-        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
         "License :: OSI Approved :: BSD License",
         ],
     license='Trac license (BSD-like)',
