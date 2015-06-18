@@ -116,6 +116,26 @@ In your ``trac.ini``::
   #
   absolute_trust_root = false
 
+*****************************
+Migration from TracAuthOpenID
+*****************************
+
+If you used **only** google as the authentication provider with
+TracAuthOpenId_, then you should be able to disable
+``TracAuthOpenId``, configure and enable ``trac-oidc``, and things
+*should* just work — users should keep their sessions (i.e. they will
+retain their settings and permissions.)
+
+.. note::
+
+   Make sure not to change the setting of ``absolute_trust_root`` from
+   whatever you were using with ``TracAuthOpenId``.
+
+If you were using multiple authentication providers with ``TracAuthOpenId``,
+it should be possible to run both ``TracAuthOpenId`` (with google disabled),
+and ``trac-oidc`` together.  I have not tried this, however, and some tuning
+will probably be required.
+
 *****
 To Do
 *****
