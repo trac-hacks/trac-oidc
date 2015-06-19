@@ -69,7 +69,7 @@ setup(
     install_requires=requires,
     entry_points={
         'trac.plugins': [
-            'trac_oidc = trac_oidc.plugin',
+            'trac_oidc = trac_oidc.trac_oidc',
             ],
         },
 

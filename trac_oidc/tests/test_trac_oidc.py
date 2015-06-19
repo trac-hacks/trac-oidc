@@ -23,7 +23,7 @@ def env():
 
 class TestOidcPlugin(object):
     def make_one(self, env):
-        from ..plugin import OidcPlugin
+        from ..trac_oidc import OidcPlugin
         return OidcPlugin(env)
 
     @pytest.fixture
@@ -49,7 +49,7 @@ class TestOidcPlugin(object):
 
     @pytest.fixture
     def csrf_token(self, req):
-        from ..plugin import get_csrf_token
+        from ..trac_oidc import get_csrf_token
         return get_csrf_token(req)
 
     def test_get_active_navigation_item(self, plugin, req):
@@ -114,7 +114,7 @@ class TestOidcPlugin(object):
         self.assert_redirected(req)
 
     def test_process_request_redirect(self, plugin, req):
-        from ..plugin import get_csrf_token
+        from ..trac_oidc import get_csrf_token
         req.environ['PATH_INFO'] = 'trac_oidc/redirect'
         orig_csrf_token = get_csrf_token(req)
         plugin._get_credentials = mock.Mock()
@@ -129,7 +129,7 @@ class TestOidcPlugin(object):
         assert get_csrf_token(req) != orig_csrf_token
 
     def test_process_request_redirect_auth_failed(self, plugin, req):
-        from ..plugin import get_csrf_token
+        from ..trac_oidc import get_csrf_token
         req.environ['PATH_INFO'] = 'trac_oidc/redirect'
         orig_csrf_token = get_csrf_token(req)
         plugin._get_credentials = mock.Mock(return_value=None)
@@ -367,19 +367,19 @@ class TestOidcPlugin(object):
      'https://example.com/x?sub=foo%26bar'),
     ])
 def test_subject_uri(iss, sub, subject_id):
-    from ..plugin import subject_uri
+    from ..trac_oidc import subject_uri
     assert subject_uri(iss, sub) == subject_id
 
 
 class test_uniquifier_suffixes():
-    from ..plugin import uniquifier_suffixes
+    from ..trac_oidc import uniquifier_suffixes
     assert list(islice(uniquifier_suffixes(), 3)) == ['', ' (2)', ' (3)']
 
 
 class Test_new_session(object):
 
     def call_it(self, *args, **kwargs):
-        from ..plugin import new_session
+        from ..trac_oidc import new_session
         return new_session(*args, **kwargs)
 
     def test_creates_session(self, env):
@@ -416,14 +416,14 @@ class Test_new_session(object):
      'http://example.com/foo/'),
     ])
 def test_get_return_url(base_url, referer, return_url):
-    from ..plugin import _get_return_url
+    from ..trac_oidc import _get_return_url
     req = mock.Mock(base_url=base_url,
                     get_header=mock.Mock(spec=(), return_value=referer))
     assert _get_return_url(req) == return_url
 
 
 def test_get_csrf_token():
-    from ..plugin import get_csrf_token
+    from ..trac_oidc import get_csrf_token
     req = mock.Mock(session={})
     token = get_csrf_token(req)
     assert len(token) == 32
@@ -431,7 +431,7 @@ def test_get_csrf_token():
 
 
 def test_new_csrf_token():
-    from ..plugin import get_csrf_token, new_csrf_token
+    from ..trac_oidc import get_csrf_token, new_csrf_token
     req = mock.Mock(session={})
     token = get_csrf_token(req)
     new_csrf_token(req)
@@ -440,7 +440,7 @@ def test_new_csrf_token():
 
 class Test_strings_differ(object):
     def call_it(self, string1, string2):
-        from ..plugin import strings_differ
+        from ..trac_oidc import strings_differ
         return strings_differ(string1, string2)
 
     def test_strings_equal(self):
