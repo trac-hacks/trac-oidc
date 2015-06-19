@@ -1,6 +1,6 @@
-========================
-Trac-oidc |build status|
-========================
+==================================
+Trac-oidc |version| |build status|
+==================================
 
 ***********
 Description
@@ -162,6 +162,11 @@ Authors
 .. _oauth2client: https://pypi.python.org/pypi/oauth2client
 .. _google developers console: https://console.developers.google.com/
 .. _pypi: https://pypi.python.org/pypi/trac-oidc
+
+.. |version| image::
+    https://img.shields.io/pypi/v/trac-oidc.svg
+    :target: https://pypi.python.org/pypi/trac-oidc/
+    :alt: Latest Version
 .. |build status| image::
     https://travis-ci.org/dairiki/trac-oidc.svg?branch=master
     :target: https://travis-ci.org/dairiki/trac-oidc
