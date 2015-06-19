@@ -6,7 +6,7 @@ Trac-oidc |build status|
 Description
 ***********
 
-A plugin to support authentication to trac using `OpenID Connect`_.
+A plugin to support authentication to trac_ using `OpenID Connect`_.
 
 This plugin is being written in a fire-drill mode since google has
 discontinued support for OpenID authentication and our trac is
@@ -155,6 +155,7 @@ Authors
 `Jeff Dairiki`_
 
 .. _Jeff Dairiki: mailto:dairiki@dairiki.org
+.. _trac: http://trac.edgewall.org/
 .. _TracAuthOpenId: https://pypi.python.org/pypi/TracAuthOpenId
 .. _OpenId Connect: http://openid.net/connect/
 .. _oic: https://pypi.python.org/pypi/oic
