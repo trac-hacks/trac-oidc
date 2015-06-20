@@ -4,6 +4,10 @@ sudo: false
 env:
   - TOXENV=py26
   - TOXENV=py27
+  - TOXENV=py26-trac_0.11
+  - TOXENV=py27-trac_0.11
+  - TOXENV=py26-trac_0.12
+  - TOXENV=py27-trac_0.12
   - TOXENV=cover
 install:
   - pip install tox
