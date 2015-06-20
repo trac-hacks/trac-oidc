@@ -12,6 +12,7 @@ from itertools import chain, count
 import json
 import os
 from urllib import urlencode
+from urlparse import parse_qsl
 
 from genshi.builder import tag
 import httplib2
@@ -20,7 +21,6 @@ from trac.config import BoolOption, PathOption
 from trac.perm import PermissionSystem
 from trac.util import hex_entropy
 from trac.util.translation import _
-from trac.web.api import parse_arg_list
 from trac.web.auth import LoginModule
 from trac.web.chrome import add_warning
 from trac.web.session import DetachedSession
@@ -137,7 +137,7 @@ class OidcPlugin(LoginModule):
         otherwise returns ``None``.
 
         """
-        args = dict(parse_arg_list(req.query_string))
+        args = dict(parse_qsl(req.query_string))
         csrf_token = get_csrf_token(req)
 
         def failed(msg):

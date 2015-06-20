@@ -5,6 +5,11 @@ History
 Next Release
 ============
 
+Features
+~~~~~~~~
+
+- The plugin should now work with trac 0.11.
+
 Bugs Fixed
 ~~~~~~~~~~
 

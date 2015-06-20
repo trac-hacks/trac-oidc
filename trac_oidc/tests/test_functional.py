@@ -20,6 +20,7 @@ import pytest
 from trac.admin.console import TracAdmin
 
 import mock
+from trac.env import open_environment
 from trac.web.main import dispatch_request
 from webtest import TestApp
 
@@ -68,10 +69,7 @@ def trac_admin(env_path, *commands):
 def env_path(request):
     env_path = mkdtemp(suffix='.env')
     request.addfinalizer(partial(rmtree, env_path))
-    trac_admin(env_path,
-               'initenv testenv sqlite:db/trac.db',
-               'config set logging log_level INFO',
-               'config set components trac_oidc.* enabled')
+    trac_admin(env_path, 'initenv testenv sqlite:db/trac.db svn ""')
 
     # Create dummy client_secret.json
     web_secrets = {
@@ -88,15 +86,43 @@ def env_path(request):
     return env_path
 
 
-@pytest.fixture(params=[
-    # Run test both with and with the stock LoginModule
-    ['config set components trac.web.auth.loginmodule enabled'],
-    ['config set components trac.web.auth.loginmodule disabled'],
-    ])
-def test_app(env_path, request):
-    trac_admin(env_path, *request.param)
+@pytest.fixture
+def env(env_path):
+    return open_environment(env_path, use_cache=True)
+
+
+TRAC_CONFIGS = [
+    {
+        'logging': {
+            'log_level': 'INFO',
+            },
+        'components': {
+            'trac_oidc.*': 'enabled',
+            'trac.web.auth.loginmodule': 'enabled',
+            },
+        },
+    {
+        'logging': {
+            'log_level': 'INFO',
+            },
+        'components': {
+            'trac_oidc.*': 'enabled',
+            'trac.web.auth.loginmodule': 'disabled',
+            },
+        },
+    ]
+
+
+@pytest.fixture(params=TRAC_CONFIGS)
+def test_app(env, request):
+    settings = request.param
+    for section in settings:
+        for name, value in settings[section].items():
+            env.config.set(section, name, value)
+    env.config.save()
+
     environ = {
-        'trac.env_path': env_path,
+        'trac.env_path': env.path,
         'HTTP_HOST': 'localhost',
         }
     return TestApp(dispatch_request, extra_environ=environ)
