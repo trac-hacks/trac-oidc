@@ -71,7 +71,11 @@ class OidcPlugin(LoginModule):
                          user=req.authname,
                          name=req.session.get('name') or req.authname))
                 yield ('metanav', 'trac_oidc.logout',
-                       tag.a(_('Logout'), href=oidc_href('logout')))
+                       tag.form(tag.div(
+                           tag.button(_('Logout'),
+                                      name='logout', type='submit')),
+                                action=oidc_href('logout'), method='post',
+                                id='logout', class_='trac-logout'))
         else:
             yield ('metanav', 'trac_oidc.login',
                    tag.a(_('Login using Google'), href=oidc_href('login')))
