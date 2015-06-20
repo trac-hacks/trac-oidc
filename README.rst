@@ -17,8 +17,7 @@ provider.
 
 Development takes place at http://github.com/dairiki/trac-oidc/.
 
-I am using this plugin under trac 0.12.5.  I *think* it should
-work in newer trac versions, as well, but that has not yet been tested.
+This plugin is tested with trac versions 0.11, 0.12 and 1.0.
 
 *****
 Usage
