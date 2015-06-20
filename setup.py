@@ -20,6 +20,7 @@ tests_require = [
     'pytest',
     'pytest-capturelog',
     'Mock',
+    'WebTest',
     ]
 
 

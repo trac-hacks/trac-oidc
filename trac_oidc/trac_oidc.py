@@ -136,21 +136,29 @@ class OidcPlugin(LoginModule):
         args = dict(parse_arg_list(req.query_string))
         csrf_token = get_csrf_token(req)
 
-        failure_msg = None
+        def failed(msg):
+            self.log.info("Authentication failed: %s", msg)
+            add_warning(req, "Authentication failed: %s", msg)
+
         if 'error' in args:
-            failure_msg = args['error']
+            return failed(args['error'])
         elif 'code' not in args:
-            failure_msg = "no 'code' in redirect"
+            return failed("no 'code' in redirect")
         elif strings_differ(args.get('state', ''), csrf_token):
-            failure_msg = "incorrect 'state' in redirect"
+            return failed("incorrect 'state' in redirect")
 
-        if failure_msg:
-            add_warning(req, "Authentication failed: %s", failure_msg)
-            return
+        return self._step2_exchange(req, args['code'])
 
+    def _step2_exchange(self, req, code):
+        """ Exchange ``code`` for Oauth2 credentials
+
+        This is broken out into its own method mainly so that it can be
+        monkey-patched for test purposes.
+
+        """
         flow = self._get_oauth2_flow(req)
         try:
-            return flow.step2_exchange(args['code'])
+            return flow.step2_exchange(code)
         except FlowExchangeError as ex:
             add_warning(req, "Failed to retrieve credentials: %s", ex)
 
