@@ -34,8 +34,11 @@ class TestOidcPlugin(object):
     def req(self, env):
         environ = {
             'trac.base_url': env.base_url,
+            'wsgi.url_scheme': 'http',
             'SCRIPT_NAME': '/trac.cgi',
             'REQUEST_METHOD': 'GET',
+            'SERVER_NAME': 'localhost',
+            'SERVER_PORT': '80',
             }
         start_response = mock.Mock(name='start_response')
         req = Request(environ, start_response)
