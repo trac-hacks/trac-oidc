@@ -1,6 +1,8 @@
-==================================
-Trac-oidc |version| |build status|
-==================================
+=========
+Trac-oidc
+=========
+
+|version| |trac versions| |build status|
 
 ***********
 Description
@@ -169,3 +171,6 @@ Authors
 .. |build status| image::
     https://travis-ci.org/dairiki/trac-oidc.svg?branch=master
     :target: https://travis-ci.org/dairiki/trac-oidc
+.. |trac versions| image::
+    https://img.shields.io/badge/trac-0.11%2C%200.12%2C%201.0-blue.svg
+    :target: http://trac.edgewall.org/
