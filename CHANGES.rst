@@ -2,8 +2,8 @@
 History
 *******
 
-Next Release
-============
+0.1.2 (2015-06-20)
+==================
 
 Features
 ~~~~~~~~
@@ -20,7 +20,8 @@ Bugs Fixed
 Testing
 ~~~~~~~
 
-- Added a functional test.  Run tests with trac version 0.11, 0.12 and latest (1.0).
+- Added a functional test.  Run tests with trac version 0.11, 0.12 and
+  latest (1.0).
 
 Refactor
 ~~~~~~~~
@@ -29,7 +30,7 @@ Refactor
   Trac’s default log format string includes ``"[%(module)s]"`` —
   ``[trac_oidc]`` is much more informative than ``[plugin]``.
 
-==================
+
 0.1.1 (2015-06-18)
 ==================
 
