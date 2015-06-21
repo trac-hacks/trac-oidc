@@ -5,7 +5,11 @@ History
 Next Release
 ============
 
-No changes yet.
+Refactor
+~~~~~~~~
+
+- Move the code to handle management of the authentication cookie
+  into its own component (``AuthCookieManager``).
 
 0.1.2 (2015-06-20)
 ==================

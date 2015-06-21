@@ -8,6 +8,7 @@ Oauth2, but rather OpenID Connect (which is built on OAauth2).)
 """
 from __future__ import absolute_import
 
+from contextlib import contextmanager
 from itertools import chain, count
 import json
 import os
@@ -18,12 +19,16 @@ from genshi.builder import tag
 import httplib2
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
 from trac.config import BoolOption, PathOption
+from trac.core import implements, Component, ExtensionPoint
 from trac.perm import PermissionSystem
 from trac.util import hex_entropy
 from trac.util.translation import _
+from trac.web.api import IAuthenticator, IRequestHandler
 from trac.web.auth import LoginModule
-from trac.web.chrome import add_warning
+from trac.web.chrome import add_warning, INavigationContributor
 from trac.web.session import DetachedSession
+
+from .api import ILoginManager
 
 # FIXME: integrate with AccountManagerPlugin
 # try:
@@ -37,12 +42,34 @@ SUBJECT_SKEY = 'trac_oidc.subject'
 IDENTITY_URL_SKEY = 'openid_session_identity_url_data'
 
 
-class OidcPlugin(LoginModule):
+class AuthCookieManager(LoginModule):
+    """Manage the authentication cookie.
+
+    This handles setting the trac authentication cookie and updating
+    the ``auth_cookie`` table in the trac db.
+
+    XXX: We use the stock ``trac.web.auth.LoginModule`` to do this,
+    however, as you can see, this takes a bit of hacking...
+
+    """
+    implements(IAuthenticator, ILoginManager)
+
+    def remember_user(self, req, authname):
+        with temporary_environ(req, REMOTE_USER=authname):
+            self._do_login(req)  # LoginModule._do_login
+
+    def forget_user(self, req):
+        # HACK: In trac >= 1.0.2, LoginModule._do_logout does nothing
+        # unless request.method == POST.
+        with temporary_environ(req, REQUEST_METHOD='POST'):
+            self._do_logout(req)
+
+
+class OidcPlugin(Component):
     """ Authenticate via OpenID Connect
 
     """
-
-    # implements(IAuthenticator, INavigationContributor, IRequestHandler)
+    implements(INavigationContributor, IRequestHandler)
 
     client_secret_file = PathOption(
         'trac_oidc', 'client_secret_file', 'client_secret.json',
@@ -53,6 +80,8 @@ class OidcPlugin(LoginModule):
     absolute_trust_root = BoolOption(
         'openid', 'absolute_trust_root', 'true',
         """Whether we should use absolute trust root or by project.""")
+
+    login_managers = ExtensionPoint(ILoginManager)
 
     def __init__(self):
         self.show_logout_link = not self.env.is_component_enabled(LoginModule)
@@ -94,7 +123,8 @@ class OidcPlugin(LoginModule):
             return req.redirect(auth_url)
         elif req.path_info.endswith('/logout'):
             return_url = _get_return_url(req)
-            self._do_logout(req)
+            for lm in self.login_managers:
+                lm.forget_user(req)
             return req.redirect(return_url)
         elif req.path_info.endswith('/redirect'):
             return_url = req.session.get(RETURN_URL_SKEY, req.base_url)
@@ -105,9 +135,8 @@ class OidcPlugin(LoginModule):
                 authname = self._authname_for_credentials(credentials)
                 if authname:
                     self.log.info("Logging in as %r", authname)
-                    # FIXME: hackish
-                    req.environ['REMOTE_USER'] = authname
-                    self._do_login(req)  # LoginModule._do_login
+                    for lm in self.login_managers:
+                        lm.remember_user(req, authname)
             return req.redirect(return_url)
 
     def _get_oauth2_flow(self, req):
@@ -417,3 +446,19 @@ def strings_differ(string1, string2):
         invalid_bits += a != b
 
     return invalid_bits != 0
+
+
+_marker = object()
+
+
+@contextmanager
+def temporary_environ(req, **kwargs):
+    """ A context manager used to teporarily modify ``req.environ``.
+    """
+    environ = req.environ
+    req.environ = environ.copy()
+    req.environ.update(kwargs)
+    try:
+        yield req.environ
+    finally:
+        req.environ = environ

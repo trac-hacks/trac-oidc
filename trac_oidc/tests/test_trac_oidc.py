@@ -10,10 +10,13 @@ from urllib import urlencode
 import mock                     # FIXME: use trac.test.Mock?
 from oauth2client.client import FlowExchangeError
 import pytest
+from trac.core import implements, Component
 from trac.perm import PermissionSystem
 from trac.test import EnvironmentStub
 from trac.web.api import Request
 from trac.web.session import DetachedSession
+
+from ..api import ILoginManager
 
 
 @pytest.fixture
@@ -21,31 +24,77 @@ def env():
     return EnvironmentStub()
 
 
+def dummy_request(env, cookies_from=None):
+    environ = {
+        'trac.base_url': env.base_url,
+        'wsgi.url_scheme': 'http',
+        'SCRIPT_NAME': '/trac.cgi',
+        'REQUEST_METHOD': 'GET',
+        'SERVER_NAME': 'localhost',
+        'SERVER_PORT': '80',
+        }
+    if cookies_from:
+        outcookie = cookies_from.outcookie
+        cookie = '; '.join('%s=%s' % (name, morsel.value)
+                           for name, morsel in outcookie.items())
+        environ['HTTP_COOKIE'] = cookie
+    start_response = mock.Mock(name='start_response')
+    req = Request(environ, start_response)
+    req.session = {}
+    req.chrome = {'warnings': []}
+    req.redirect = mock.Mock(name='req.redirect', spec=())
+    req.authname = 'anonymous'
+    return req
+
+
+class TestAuthCookieManager(object):
+    @pytest.fixture
+    def manager(self, env):
+        from ..trac_oidc import AuthCookieManager
+        return AuthCookieManager(env)
+
+    def test(self, env, manager):
+        req = dummy_request(env)
+        manager.remember_user(req, 'foobaroo')
+        auth_req = dummy_request(env, cookies_from=req)
+        assert manager.authenticate(auth_req) == 'foobaroo'
+
+        req = dummy_request(env)
+        req.authname = 'foobaroo'
+        manager.forget_user(req)
+        manager.forget_user(req)
+        assert manager.authenticate(auth_req) is None
+
+
+class DummyLoginManager(Component):
+    implements(ILoginManager)
+
+    def __init__(self):
+        # Auto-enable self when instantiated
+        self.compmgr.enabled[self.__class__] = True
+        self.authname = None
+
+    def remember_user(self, req, authname):
+        self.authname = authname
+
+    def forget_user(self, req):
+        self.authname = None
+
+
 class TestOidcPlugin(object):
-    def make_one(self, env):
+    @pytest.fixture
+    def plugin(self, env):
         from ..trac_oidc import OidcPlugin
         return OidcPlugin(env)
 
     @pytest.fixture
-    def plugin(self, env):
-        return self.make_one(env)
+    def login_manager(self, env):
+        env.enabled[DummyLoginManager] = True
+        return DummyLoginManager(env)
 
     @pytest.fixture
     def req(self, env):
-        environ = {
-            'trac.base_url': env.base_url,
-            'wsgi.url_scheme': 'http',
-            'SCRIPT_NAME': '/trac.cgi',
-            'REQUEST_METHOD': 'GET',
-            'SERVER_NAME': 'localhost',
-            'SERVER_PORT': '80',
-            }
-        start_response = mock.Mock(name='start_response')
-        req = Request(environ, start_response)
-        req.session = {}
-        req.chrome = {'warnings': []}
-        req.redirect = mock.Mock(name='req.redirect', spec=())
-        return req
+        return dummy_request(env)
 
     def assert_redirected(self, req, location=mock.ANY):
         assert req.redirect.mock_calls == [mock.call(location)]
@@ -109,25 +158,23 @@ class TestOidcPlugin(object):
         assert 'trac_oidc.return_url' in req.session
         self.assert_redirected(req, auth_url)
 
-    def test_process_request_logout(self, plugin, req):
+    def test_process_request_logout(self, plugin, req, login_manager):
+        login_manager.authname = 'someuser'
         req.environ['PATH_INFO'] = 'trac_oidc/logout'
-        plugin._do_logout = mock.Mock()
         plugin.process_request(req)
-        assert plugin._do_logout.mock_calls == [mock.call(req)]
+        assert login_manager.authname is None
         self.assert_redirected(req)
 
-    def test_process_request_redirect(self, plugin, req):
+    def test_process_request_redirect(self, plugin, req, login_manager):
         from ..trac_oidc import get_csrf_token
         req.environ['PATH_INFO'] = 'trac_oidc/redirect'
         orig_csrf_token = get_csrf_token(req)
         plugin._get_credentials = mock.Mock()
         plugin._authname_for_credentials = mock.Mock(return_value='user23')
-        plugin._do_login = mock.Mock()
 
         plugin.process_request(req)
 
-        assert req.environ['REMOTE_USER'] == 'user23'
-        assert plugin._do_login.mock_calls == [mock.call(req)]
+        assert login_manager.authname == 'user23'
         self.assert_redirected(req, req.base_url)
         assert get_csrf_token(req) != orig_csrf_token
 
