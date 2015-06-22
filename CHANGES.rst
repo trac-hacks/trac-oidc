@@ -9,7 +9,10 @@ Refactor
 ~~~~~~~~
 
 - Move the code to handle management of the authentication cookie
-  into its own component (``AuthCookieManager``).
+  into its own component (``AuthCookieManager``.)
+
+- Move the code to handle searching and management session (user)
+  database into its own component (``SessionHelper``.)
 
 0.1.2 (2015-06-20)
 ==================

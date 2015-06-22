@@ -327,31 +327,6 @@ class TestOidcPlugin(object):
         sid = plugin._find_session(credentials)
         assert sid is None
 
-    def test_find_session_by_attr(self, env, plugin):
-        ds = DetachedSession(env, 'foo')
-        ds['bar'] = 'baz'
-        ds.save()
-        sid = plugin._find_session_by_attr('bar', 'baz')
-        assert sid == 'foo'
-
-    def test_find_session_by_attr_not_found(self, env, plugin,
-                                            monkeypatch, caplog):
-        monkeypatch.setattr("time.time", lambda: 1000)
-        ds = DetachedSession(env, 'old')
-        ds['bar'] = 'baz'
-        ds.save()
-        monkeypatch.setattr("time.time", lambda: 1100)
-        ds = DetachedSession(env, 'new')
-        ds['bar'] = 'baz'
-        ds.save()
-        sid = plugin._find_session_by_attr('bar', 'baz', 'bar-desc')
-        assert sid == 'new'
-        assert 'Multiple users share the same bar-desc baz:' in caplog.text()
-
-    def test_find_session_by_attr_returns_most_recent(self, env, plugin):
-        sid = plugin._find_session_by_attr('bar', 'baz')
-        assert sid is None
-
     def test_get_openid_profile(self, plugin):
         credentials = mock.Mock(name='credentials')
         http = credentials.authorize.return_value
@@ -421,38 +396,66 @@ def test_subject_uri(iss, sub, subject_id):
     assert subject_uri(iss, sub) == subject_id
 
 
-class test_uniquifier_suffixes():
-    from ..trac_oidc import uniquifier_suffixes
-    assert list(islice(uniquifier_suffixes(), 3)) == ['', ' (2)', ' (3)']
+class TestSessionHelper(object):
+    @pytest.fixture
+    def helper(self, env):
+        from ..trac_oidc import SessionHelper
+        return SessionHelper(env)
 
+    def test_find_session_by_attr(self, env, helper):
+        ds = DetachedSession(env, 'foo')
+        ds['bar'] = 'baz'
+        ds.save()
+        sid = helper.find_session_by_attr('bar', 'baz')
+        assert sid == 'foo'
 
-class Test_new_session(object):
+    def test_find_session_by_attr_returns_none(self, env, helper):
+        sid = helper.find_session_by_attr('bar', 'baz')
+        assert sid is None
 
-    def call_it(self, *args, **kwargs):
-        from ..trac_oidc import new_session
-        return new_session(*args, **kwargs)
+    def test_find_session_by_attr_returns_most_recent(self, env, helper,
+                                                      monkeypatch, caplog):
+        monkeypatch.setattr("time.time", lambda: 1000)
+        ds = DetachedSession(env, 'old')
+        ds['bar'] = 'baz'
+        ds.save()
+        monkeypatch.setattr("time.time", lambda: 1100)
+        ds = DetachedSession(env, 'new')
+        ds['bar'] = 'baz'
+        ds.save()
+        sid = helper.find_session_by_attr('bar', 'baz', 'bar-desc')
+        assert sid == 'new'
+        assert 'Multiple users share the same bar-desc baz:' in caplog.text()
 
-    def test_creates_session(self, env):
-        ds = self.call_it(env, 'foo')
-        assert ds.sid == 'foo'
+    def test_create_session(self, env, helper):
+        sid = helper.create_session('foo', {'name': 'Joe'})
+        assert sid == 'foo'
+        ds = DetachedSession(env, 'foo')
+        assert ds['name'] == 'Joe'
 
-    def test_skips_existing_session(self, env):
-        ds1 = self.call_it(env, 'foo', {'x': 'x'})
-        assert ds1.sid == 'foo'
-        ds2 = self.call_it(env, 'foo')
-        assert ds2.sid == 'foo (2)'
+    def test_create_session_skips_existing(self, helper):
+        sid1 = helper.create_session('foo', {'name': 'Joe'})
+        assert sid1 == 'foo'
+        sid2 = helper.create_session('foo', {'name': 'Joe'})
+        assert sid2 == 'foo (2)'
 
-    def test_skips_sid_with_permission(self, env):
+    def test_create_session_skips_sid_with_permission(self, env, helper):
         PermissionSystem(env).grant_permission('foo', 'TRAC_ADMIN')
-        ds = self.call_it(env, 'foo')
-        assert ds.sid == 'foo (2)'
+        sid = helper.create_session('foo', {'name': 'Joe'})
+        assert sid == 'foo (2)'
 
-    def test_sets_settings(self, env):
-        settings = {'name': 'Foo Baroo'}
-        ds = self.call_it(env, 'foo', settings)
-        assert ds['name'] == 'Foo Baroo'
-        ds2 = DetachedSession(env, ds.sid)
-        assert ds2['name'] == 'Foo Baroo'
+    def test_create_session_raises_value_error(self, helper):
+        with pytest.raises(ValueError):
+            helper.create_session('foo', {})
+
+    def test_uniquifier_suffixes(self, helper):
+        suffixes = helper.uniquifier_suffixes()
+        assert list(islice(suffixes, 3)) == ['', ' (2)', ' (3)']
+
+    def test_permission_exists(self, env, helper):
+        assert not helper.permission_exists_for('foo')
+        PermissionSystem(env).grant_permission('foo', 'TRAC_ADMIN')
+        assert helper.permission_exists_for('foo')
 
 
 @pytest.mark.parametrize('base_url, referer, return_url', [

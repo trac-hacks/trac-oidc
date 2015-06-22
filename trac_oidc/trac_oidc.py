@@ -85,6 +85,7 @@ class OidcPlugin(Component):
 
     def __init__(self):
         self.show_logout_link = not self.env.is_component_enabled(LoginModule)
+        self.userdb = SessionHelper(self.env)
 
     # INavigationContributor methods
 
@@ -214,8 +215,7 @@ class OidcPlugin(Component):
             id_token = credentials.id_token
             subject_id = subject_uri(id_token['iss'], id_token['sub'])
             settings[SUBJECT_SKEY] = subject_id
-            ds = new_session(self.env, authname, settings)
-            authname = ds.sid   # may have changed in order to make unique
+            authname = self.userdb.create_session(authname, settings)
             self.log.info(
                 "Created new authenticated session for %s"
                 " with settings %r",
@@ -233,7 +233,7 @@ class OidcPlugin(Component):
         issuer = id_token['iss']
         subject = id_token['sub']
         subject_id = subject_uri(issuer, subject)
-        authname = self._find_session_by_attr(
+        authname = self.userdb.find_session_by_attr(
             SUBJECT_SKEY, subject_id, 'oidc subject')
         if authname is None:
             self.log.debug(
@@ -243,7 +243,7 @@ class OidcPlugin(Component):
             # (may have) been set by the ``TracAuthOpenId`` plugin
             if 'openid_id' in id_token:
                 identity_url = id_token['openid_id']
-                authname = self._find_session_by_attr(
+                authname = self.userdb.find_session_by_attr(
                     IDENTITY_URL_SKEY, identity_url, 'oid identity url')
                 if authname:
                     self.log.info(
@@ -259,29 +259,6 @@ class OidcPlugin(Component):
                         "No authenticated session found for oid identity %s",
                         identity_url)
         return authname
-
-    def _find_session_by_attr(self, attr_name, attr_value, attr_desc=None):
-        """ Find an authenticated session which contain a specific attribute.
-
-        """
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute(
-            "SELECT session.sid"
-            " FROM session"
-            " INNER JOIN session_attribute AS attr"
-            "                  USING(sid, authenticated)"
-            " WHERE session.authenticated=%s"
-            "       AND attr.name=%s AND attr.value=%s"
-            " ORDER BY session.last_visit DESC",
-            (1, attr_name, attr_value))
-        sids = [row[0] for row in cursor.fetchall()]
-        if len(sids) > 1:
-            authnames = ', '.join("'%s'" % sid for sid in sids)
-            desc = attr_desc or attr_name
-            self.log.warning("Multiple users share the same %s %s: %s",
-                             desc, attr_value, authnames)
-        return sids[0] if sids else None
 
     def _get_openid_profile(self, credentials):
         """ Get profile in OpenID Connect format.
@@ -372,36 +349,6 @@ def subject_uri(iss, sub):
     return '%s?%s' % (iss, query_string)
 
 
-def uniquifier_suffixes():
-    return chain([""], (" (%d)" % n for n in count(2)))
-
-
-def new_session(env, authname_base, settings=None):
-    permissions = PermissionSystem(env).get_all_permissions()
-    users_and_groups_with_permissions = set(user for user, perm in permissions)
-
-    def permission_exists_for(authname):
-        return authname in users_and_groups_with_permissions
-
-    for suffix in uniquifier_suffixes():
-        authname = authname_base + suffix
-        if permission_exists_for(authname):
-            continue
-        ds = DetachedSession(env, authname)
-        # At least in 0.12.2, this means no session exists.
-        is_new = ds.last_visit == 0 and len(ds) == 0
-        if is_new:
-            break
-
-    if settings:
-        for key, value in settings.items():
-            if value is not None:
-                ds[key] = value
-        ds.save()
-
-    return ds
-
-
 def _get_return_url(req):
     # Save referer so that we can return there when done
     referer = req.get_header('Referer')
@@ -411,6 +358,87 @@ def _get_return_url(req):
         return referer
     else:
         return base
+
+
+class SessionHelper(Component):
+    """Helper for searching/manipulating the user database.
+
+    Note that in trac, the user account/profile database is
+    implemented as part of the session state storage.  User accounts
+    are refered to as "authenticated sessions".  The “username” is
+    referred to as the *session id* or ``sesssion.sid``.  It is also
+    called the *authname* (e.g. ``req.authname``.)
+
+    """
+    abstract = True
+
+    def __init__(self):
+        self.permissions = PermissionSystem(self.env)
+
+    def find_session_by_attr(self, attr_name, attr_value, attr_desc=None):
+        """ Find an authenticated session which contain a specific attribute.
+
+        """
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT session.sid"
+            " FROM session"
+            " INNER JOIN session_attribute AS attr"
+            "                  USING(sid, authenticated)"
+            " WHERE session.authenticated=%s"
+            "       AND attr.name=%s AND attr.value=%s"
+            " ORDER BY session.last_visit DESC",
+            (1, attr_name, attr_value))
+        sids = [row[0] for row in cursor.fetchall()]
+        if len(sids) > 1:
+            authnames = ', '.join("'%s'" % sid for sid in sids)
+            desc = attr_desc or attr_name
+            self.log.warning("Multiple users share the same %s %s: %s",
+                             desc, attr_value, authnames)
+        return sids[0] if sids else None
+
+    def create_session(self, authname_base, attributes):
+        """Create a new authenticated session.
+
+        (In trac, authenticated sessions are, essentially “user accounts”,
+        so this creates a new account or “login” on the trac.)
+
+        If possible, the session is created with an ``sid`` of
+        ``authname_base``.  If a session already exists with that
+        ``sid``, then a suffix is added to make the ``sid`` unique.
+
+        The attributes of the new session are initialized from the
+        ``attributes`` argument, if any.
+
+        The ``sid`` of the new session is returned.
+
+        """
+        if not attributes:
+            raise ValueError("Attributes required for new session")
+
+        for suffix in self.uniquifier_suffixes():
+            authname = authname_base + suffix
+            if self.permission_exists_for(authname):
+                continue
+            ds = DetachedSession(self.env, authname)
+            # At least in 0.12.2, this means no session exists.
+            is_new = ds.last_visit == 0 and len(ds) == 0
+            if is_new:
+                break
+        for key, value in attributes.items():
+            ds[key] = value or ''
+        ds.save()
+        return authname
+
+    def uniquifier_suffixes(self):
+        """ Suffixes used to generate unique authnames.
+        """
+        return chain([""], (" (%d)" % n for n in count(2)))
+
+    def permission_exists_for(self, authname):
+        return any(authname == user
+                   for user, perm in self.permissions.get_all_permissions())
 
 
 def get_csrf_token(req):
