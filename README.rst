@@ -21,6 +21,10 @@ Development takes place at http://github.com/dairiki/trac-oidc/.
 
 This plugin is tested with trac versions 0.11, 0.12 and 1.0.
 
+.. _OpenId Connect: http://openid.net/connect/
+.. _trac: http://trac.edgewall.org/
+.. _TracAuthOpenId: https://pypi.python.org/pypi/TracAuthOpenId
+
 *****
 Usage
 *****
@@ -32,6 +36,8 @@ You must obtain *OAuth 2.0 credentials* from google before you can
 use this plugin.
 
 1. Go to the `Google Developers Console`_.
+
+.. _google developers console: https://console.developers.google.com/
 
 2. Select a project, or create a new one.
 
@@ -69,6 +75,7 @@ use this plugin.
    contains sensitive information, consider setting the file
    permissions so that not just anybody can read it.)
 
+
 Install the Plugin
 ==================
 
@@ -76,6 +83,8 @@ The plugin is available from PyPI_, so it may be installed,
 e.g., using *pip*::
 
       pip install trac-oidc
+
+.. _pypi: https://pypi.python.org/pypi/trac-oidc
 
 Configuration
 =============
@@ -156,12 +165,17 @@ Maybe using oic_ (rather than oauth2client_) would make this easier.
 Use ``preferred_username`` claim, when available, to determine the
 default authname for new accounts.
 
+.. _oic: https://pypi.python.org/pypi/oic
+.. _oauth2client: https://pypi.python.org/pypi/oauth2client
+
 Integrate with AccountManagerPlugin
 ===================================
 
 I’m not sure exactly what’s involved, but it would be nice if the
 AccountManagerPlugin_ could be used to administer associations between
 OIDC subject identifiers and authenticated sessions, etc.
+
+.. _AccountManagerPlugin: https://trac-hacks.org/wiki/AccountManagerPlugin
 
 *******
 Authors
@@ -170,14 +184,6 @@ Authors
 `Jeff Dairiki`_
 
 .. _Jeff Dairiki: mailto:dairiki@dairiki.org
-.. _trac: http://trac.edgewall.org/
-.. _TracAuthOpenId: https://pypi.python.org/pypi/TracAuthOpenId
-.. _OpenId Connect: http://openid.net/connect/
-.. _oic: https://pypi.python.org/pypi/oic
-.. _oauth2client: https://pypi.python.org/pypi/oauth2client
-.. _google developers console: https://console.developers.google.com/
-.. _pypi: https://pypi.python.org/pypi/trac-oidc
-.. _AccountManagerPlugin: https://trac-hacks.org/wiki/AccountManagerPlugin
 
 .. |version| image::
     https://img.shields.io/pypi/v/trac-oidc.svg
