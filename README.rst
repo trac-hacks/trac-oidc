@@ -146,8 +146,22 @@ Possible improvements.
 Generalize to work with more providers
 ======================================
 
+This could be generalized to work with other OpenID Connect providers,
+as well as other OAuth2-based (but non OpenID Connect) providers
+(e.g. Facebook, Twitter).
+
 Maybe using oic_ (rather than oauth2client_) would make this easier.
 (``Oic`` is rather sparsely documented, however.)
+
+Use ``preferred_username`` claim, when available, to determine the
+default authname for new accounts.
+
+Integrate with AccountManagerPlugin
+===================================
+
+I’m not sure exactly what’s involved, but it would be nice if the
+AccountManagerPlugin_ could be used to administer associations between
+OIDC subject identifiers and authenticated sessions, etc.
 
 *******
 Authors
@@ -163,6 +177,7 @@ Authors
 .. _oauth2client: https://pypi.python.org/pypi/oauth2client
 .. _google developers console: https://console.developers.google.com/
 .. _pypi: https://pypi.python.org/pypi/trac-oidc
+.. _AccountManagerPlugin: https://trac-hacks.org/wiki/AccountManagerPlugin
 
 .. |version| image::
     https://img.shields.io/pypi/v/trac-oidc.svg
