@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from functools import partial
 import json
-from urlparse import parse_qsl
 
 import httplib2
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
@@ -80,13 +79,14 @@ class Authenticator(object):
     def _get_code(self, req):
         """ Extract ``code`` from redirect
         """
-        args = dict(parse_qsl(req.query_string))
-        state = args.get('state', '')
-        code = args.get('code')
+        args = req.args
+        error = args.getfirst('error')
+        state = args.getfirst('state', '')
+        code = args.getfirst('code')
         expected_state = req.session.pop(self.STATE_SKEY, None)
 
-        if 'error' in args:
-            raise AuthenticationFailed(args['error'])
+        if error is not None:
+            raise AuthenticationFailed(error)
         elif not expected_state or strings_differ(state, expected_state):
             raise AuthenticationError("incorrect 'state' in redirect")
         elif not code:

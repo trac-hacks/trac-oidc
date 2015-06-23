@@ -41,9 +41,13 @@ def client_secret_file(tmpdir, web_secrets):
     return str(secret_file)
 
 
+class _RequestArgs(dict):
+    getfirst = dict.get
+
+
 class DummyRequest(object):
     def __init__(self, query=None, oauth_state=None):
-        self.query_string = urlencode(query) if query else ''
+        self.args = _RequestArgs(query or {})
         self.session = {}
         if oauth_state is not None:
             self.oauth_state = oauth_state
