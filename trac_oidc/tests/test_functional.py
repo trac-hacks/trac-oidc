@@ -24,33 +24,27 @@ from trac.env import open_environment
 from trac.web.main import dispatch_request
 from webtest import TestApp
 
-
-class DummyCredentials(object):
-    _counter = count()
-
-    def __init__(self, iss='https://example.org', counter=_counter):
-        self.id_token = {
-            'iss': iss,
-            'sub': 'sub-%d' % next(self._counter),
-            }
-        self.profile = {}
-
-    def authorize(self, http):
-        return self
-
-    def request(self, url):
-        resp = mock.Mock(status=200)
-        content = json.dumps(self.profile)
-        return resp, content
+from ..authenticator import Authenticator
 
 
 @pytest.fixture
-def dummy_credentials(monkeypatch):
-    from ..trac_oidc import OidcPlugin
-    cred = DummyCredentials()
-    monkeypatch.setattr(OidcPlugin, '_step2_exchange',
-                        lambda self, req, code: cred)
-    return cred
+def get_identity(monkeypatch):
+    get_identity = mock.Mock(name='Authenticator.get_identity')
+    monkeypatch.setattr(Authenticator, 'get_identity', get_identity)
+    return get_identity
+
+
+_counter = count(1)
+
+
+@pytest.fixture
+def id_token(get_identity):
+    id_token = {
+        'iss': 'https://example.net',
+        'sub': 'sub%d' % next(_counter),
+        }
+    get_identity.return_value = id_token
+    return id_token
 
 
 def trac_admin(env_path, *commands):
@@ -155,9 +149,11 @@ def oauth_redirect_url(auth_url):
     return redirect_uri
 
 
-def test(test_app, dummy_credentials):
-    dummy_credentials.id_token['email'] = 'joe@example.org'
-    dummy_credentials.profile['name'] = 'Joe Bloe'
+def test(test_app, id_token):
+    id_token.update({
+        'email': 'joe@example.org',
+        'name': 'Joe Bloe',
+        })
 
     resp = test_app.get('/prefs')
     assert not is_logged_in(resp)
