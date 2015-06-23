@@ -3,7 +3,9 @@
 """
 from __future__ import absolute_import
 
+from io import BytesIO
 from itertools import islice
+from urllib import urlencode
 
 import mock                     # FIXME: use trac.test.Mock?
 import pytest
@@ -22,18 +24,19 @@ def env():
     return EnvironmentStub()
 
 
-def dummy_request(env, cookies_from=None, extra_environ=None):
+def dummy_request(env, cookies_from=None, query=None):
     environ = {
         'trac.base_url': env.base_url,
         'wsgi.url_scheme': 'http',
+        'wsgi.input': BytesIO(),
         'SCRIPT_NAME': '/trac.cgi',
         'REQUEST_METHOD': 'GET',
         'SERVER_NAME': 'example.org',
         'SERVER_PORT': '80',
         'HTTP_HOST': 'example.org',
         }
-    if extra_environ:
-        environ.update(extra_environ)
+    if query:
+        environ['QUERY_STRING'] = urlencode(query)
     if cookies_from:
         outcookie = cookies_from.outcookie
         cookie = '; '.join('%s=%s' % (name, morsel.value)
@@ -106,6 +109,10 @@ class TestOidcPlugin(object):
 
     @pytest.mark.parametrize('authname', [None, 'anonymous'])
     def test_get_navigation_items_logged_out(self, plugin, req, authname):
+        req.environ.update({
+            'PATH_INFO': '/foo',
+            'QUERY_STRING': 'q=bar',
+            })
         req.authname = authname
         items = list(plugin.get_navigation_items(req))
         assert len(items) == 1
@@ -114,9 +121,14 @@ class TestOidcPlugin(object):
         assert name == 'trac_oidc.login'
         assert 'Login using Google' in str(text)
         assert '/trac_oidc/login' in str(text)
+        assert '/trac_oidc/login?return_to=%2Ffoo%3Fq%3Dbar' in str(text)
 
     def test_get_navigation_items_logged_in(self, env, plugin, req):
         plugin.show_logout_link = True
+        req.environ.update({
+            'PATH_INFO': '/foo',
+            'QUERY_STRING': 'q=bar',
+            })
         req.authname = 'user1'
         items = {}
         for category, name, text in plugin.get_navigation_items(req):
@@ -126,6 +138,7 @@ class TestOidcPlugin(object):
         assert 'logged in as user1' in items['trac_oidc.login']
         assert 'Logout' in str(items['trac_oidc.logout'])
         assert '/trac_oidc/logout' in str(items['trac_oidc.logout'])
+        assert 'value="/foo?q=bar"' in str(items['trac_oidc.logout'])
 
     @pytest.mark.parametrize('path_info', [
         '/trac_oidc/login',
@@ -220,20 +233,30 @@ class TestOidcPlugin(object):
         env.config.set('openid', 'absolute_trust_root', 'false')
         assert plugin._get_openid_realm(req) == 'http://example.org/trac.cgi'
 
-    @pytest.mark.parametrize('base_url, referer, return_url', [
-        ('http://example.com/foo', 'http://example.com/foo/bar',
-         'http://example.com/foo/bar'),
-        ('http://example.com/foo', 'http://example.net/foo/bar',
-         'http://example.com/foo/'),
-        ('http://example.com/foo', 'http://example.com/foo',
-         'http://example.com/foo/'),
-        ('http://example.com/foo', None,
-         'http://example.com/foo/'),
+    @pytest.mark.parametrize('return_to', [
+        '/foo?bar=baz',
+        '/foo/bar',
+        '?bar=baz',
+        '',
         ])
-    def test_get_return_url(self, env, plugin, base_url, referer, return_url):
-        req = dummy_request(env, extra_environ={'HTTP_REFERER': referer})
-        req.base_url = base_url
-        assert plugin._get_return_url(req) == return_url
+    def test_get_return_url(self, env, plugin, return_to):
+        base = 'http://example.org/trac.cgi'
+        req = dummy_request(env, query={'return_to': return_to})
+        assert plugin._get_return_url(req) == (base + return_to)
+
+    @pytest.mark.parametrize('return_to', [
+        '/..',
+        '..',
+        '../',
+        'http://example.net/foo',
+        'http:/foo',
+        'http:foo',
+        '//example.net/foo',
+        ])
+    def test_get_return_url_bad_return_to(self, env, plugin, return_to):
+        base = 'http://example.org/trac.cgi'
+        req = dummy_request(env, query={'return_to': return_to})
+        assert plugin._get_return_url(req) == base
 
 
 class TestAuthCookieManager(object):

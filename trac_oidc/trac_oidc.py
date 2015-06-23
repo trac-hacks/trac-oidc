@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from itertools import chain, count
 import os
 from urllib import urlencode
+from urlparse import urlsplit
 
 from genshi.builder import tag
 from trac.config import BoolOption, PathOption
@@ -58,20 +59,31 @@ class OidcPlugin(Component):
         return 'trac_oidc.login'
 
     def get_navigation_items(self, req):
-        oidc_href = req.href.trac_oidc
-        if req.authname and req.authname != 'anonymous':
-            if self.show_logout_link:
-                yield ('metanav', 'trac_oidc.login',
-                       _('logged in as %(user)s', user=req.authname))
-                yield ('metanav', 'trac_oidc.logout',
-                       tag.form(tag.div(
-                           tag.button(_('Logout'),
-                                      name='logout', type='submit')),
-                                action=oidc_href('logout'), method='post',
-                                id='logout', class_='trac-logout'))
-        else:
-            yield ('metanav', 'trac_oidc.login',
-                   tag.a(_('Login using Google'), href=oidc_href('login')))
+        path_qs = req.path_info
+        if req.query_string:
+            path_qs += '?' + req.query_string
+
+        if not req.authname or req.authname == 'anonymous':
+            # Not logged in, show login link
+            login_url = req.href.trac_oidc('login', return_to=path_qs)
+            login_link = tag.a(_('Login using Google'), href=login_url)
+            yield 'metanav', 'trac_oidc.login', login_link
+
+        elif self.show_logout_link:
+            # Logged in and LoginModule is disabled, show logout link
+            logged_in_as = _('logged in as %(user)s', user=req.authname)
+            logout_url = req.href.trac_oidc('logout')
+            logout_form = tag.form(
+                tag.div(
+                    tag.input(type='hidden', name='return_to', value=path_qs),
+                    tag.button(_('Logout'), name='logout', type='submit')
+                    ),
+                action=logout_url,
+                id='logout',
+                class_='trac-logout'
+                )
+            yield 'metanav', 'trac_oidc.login', logged_in_as
+            yield 'metanav', 'trac_oidc.logout', logout_form
 
     # IRequestHandler methods
 
@@ -91,7 +103,7 @@ class OidcPlugin(Component):
             return req.redirect(authenticator.get_auth_url(req))
         elif req.path_info.endswith('/redirect'):
             # Finish the login process after redirect from OP
-            return_url = req.session.get(self.RETURN_URL_SKEY, req.base_url)
+            return_url = req.session.pop(self.RETURN_URL_SKEY, req.abs_href())
             id_token = self._retrieve_id(req)
             if id_token:
                 authname = self._find_or_create_session(req, id_token)
@@ -178,16 +190,17 @@ class OidcPlugin(Component):
 
     @staticmethod
     def _get_return_url(req):
-        # FIXME: use an explicit return_url argument rather than
-        # HTTP_REFERER Save referer so that we can return there when
-        # done
-        referer = req.get_header('Referer')
-        base = req.base_url.rstrip('/') + '/'
-        if referer and referer.startswith(base):
-            # only redirect to referer if it is from the same site
-            return referer
-        else:
-            return base
+        return_to = req.args.getfirst('return_to', '/')
+        # We expect return_to to be a URL relative to the trac's base_path.
+        # Be paranoid about this.
+        scheme, netloc, path, query, anchor = urlsplit(return_to)
+        if scheme or netloc or '..' in path.split('/') or anchor:
+            # return url looks suspicious, ignore it.
+            return req.abs_href()
+        return_url = req.abs_href(path)
+        if query:
+            return_url += '?' + query
+        return return_url
 
 
 class AuthCookieManager(LoginModule):

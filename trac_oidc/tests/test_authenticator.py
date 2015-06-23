@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 import json
 import logging
-from urllib import urlencode
 from urlparse import parse_qsl, urlsplit, urlunsplit
 
 import mock
