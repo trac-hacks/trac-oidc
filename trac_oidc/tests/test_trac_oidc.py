@@ -118,13 +118,12 @@ class TestOidcPlugin(object):
     def test_get_navigation_items_logged_in(self, env, plugin, req):
         plugin.show_logout_link = True
         req.authname = 'user1'
-        req.session['name'] = 'Joe'
         items = {}
         for category, name, text in plugin.get_navigation_items(req):
             assert category == 'metanav'
             items[name] = text
         assert len(items) == 2
-        assert 'logged in as Joe' in items['trac_oidc.login']
+        assert 'logged in as user1' in items['trac_oidc.login']
         assert 'Logout' in str(items['trac_oidc.logout'])
         assert '/trac_oidc/logout' in str(items['trac_oidc.logout'])
 

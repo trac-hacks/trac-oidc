@@ -62,9 +62,7 @@ class OidcPlugin(Component):
         if req.authname and req.authname != 'anonymous':
             if self.show_logout_link:
                 yield ('metanav', 'trac_oidc.login',
-                       _('logged in as %(name)s',
-                         user=req.authname,
-                         name=req.session.get('name') or req.authname))
+                       _('logged in as %(user)s', user=req.authname))
                 yield ('metanav', 'trac_oidc.logout',
                        tag.form(tag.div(
                            tag.button(_('Logout'),
