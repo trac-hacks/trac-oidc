@@ -136,6 +136,21 @@ def is_logged_in(resp):
     return False
 
 
+def check_metanav(resp):
+    """Sanity checks on the metanav bar
+
+    This makes sure that we're not getting "logged in as" and "Logout"
+    metanav items from both the stock LoginModule and AuthCookieManager.
+
+    """
+    metanav = resp.html.find(id='metanav')
+    if is_logged_in(resp):
+        logged_ins = metanav.find_all(text=re.compile(r'logged in', re.I))
+        assert len(logged_ins) == 1
+        logouts = metanav.find_all(text=re.compile(r'log\s*out', re.I))
+        assert len(logouts) == 1
+
+
 def oauth_redirect_url(auth_url):
     """ Simulate Oauth2 authentication.
     """
@@ -156,6 +171,7 @@ def test(test_app, id_token):
         })
 
     resp = test_app.get('/prefs')
+    check_metanav(resp)
     assert not is_logged_in(resp)
 
     # Initial login
@@ -169,6 +185,7 @@ def test(test_app, id_token):
     assert resp.status == '302 Found'
 
     resp = resp.follow()
+    check_metanav(resp)
     assert is_logged_in(resp)
 
     # Check that session was created

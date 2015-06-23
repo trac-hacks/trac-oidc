@@ -51,6 +51,11 @@ def dummy_request(env, cookies_from=None, query=None):
     return req
 
 
+@pytest.fixture
+def req(env):
+    return dummy_request(env)
+
+
 class DummyLoginManager(Component):
     implements(ILoginManager)
 
@@ -95,10 +100,6 @@ class TestOidcPlugin(object):
     def login_manager(self, env):
         env.enabled[DummyLoginManager] = True
         return DummyLoginManager(env)
-
-    @pytest.fixture
-    def req(self, env):
-        return dummy_request(env)
 
     def assert_redirected(self, req, location=mock.ANY):
         assert req.redirect.mock_calls == [mock.call(location)]
@@ -276,6 +277,16 @@ class TestAuthCookieManager(object):
         manager.forget_user(req)
         manager.forget_user(req)
         assert manager.authenticate(auth_req) is None
+
+    def test_get_active_navigation_item(self, manager, req):
+        assert manager.get_active_navigation_item(req) is None
+
+    def test_get_navigation_items(self, manager, req):
+        assert list(manager.get_navigation_items(req)) == []
+
+    def test_match_request(self, manager, req, path_info='/logout'):
+        req.environ['PATH_INFO'] = path_info
+        assert not manager.match_request(req)
 
 
 def test_temporary_environ():

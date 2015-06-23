@@ -50,7 +50,13 @@ class OidcPlugin(Component):
     login_managers = ExtensionPoint(ILoginManager)
 
     def __init__(self):
-        self.show_logout_link = not self.env.is_component_enabled(LoginModule)
+        # We should show our own "Logout" link only if the stock
+        # LoginModule is disabled.  (Otherwise there will be two
+        # "Logout" links with equivalent functionality.)
+        # NB: We are using env.__getattr__ here, since trac 0.11
+        # doesn't have env.is_enabled.
+        self.show_logout_link = self.env[LoginModule] is None
+
         self.userdb = UserDatabase(self.env)
 
     # INavigationContributor methods
@@ -226,6 +232,21 @@ class AuthCookieManager(LoginModule):
         # unless request.method == POST.
         with _temporary_environ(req, REQUEST_METHOD='POST'):
             self._do_logout(req)
+
+    # More hackage: override INavigationContributor and
+    # IRequestHandler methods inherited from LoginModule.
+
+    def get_active_navigation_item(self, req):
+        pass
+
+    def get_navigation_items(self, req):
+        return ()
+
+    def match_request(self, req):
+        return False
+
+    def process_request(self, req):
+        pass                    # pragma: NO COVER
 
 
 @contextmanager
