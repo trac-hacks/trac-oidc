@@ -5,18 +5,31 @@ History
 Next Release
 ============
 
-- In the "logged in as %(user)s" message, *user* is now always set
-  to the *session id* or *authname* of the logged-in user.  Previously
-  the real name of the user was shown instead, when it was available.
-  This now matches the behavior of the stock ``LoginModule`` component.
+- In the "logged in as %(user)s" message (in the *metanav* menu),
+  *user* is now always set to the *session id* or *authname* of the
+  logged-in user.  Previously the real name of the user was shown
+  instead, when it was available.  This now matches the behavior of
+  the stock ``LoginModule`` component.
 
-Refactor
-~~~~~~~~
+Bugs Fixed
+~~~~~~~~~~
 
-- Split logic into several components/classes:
+- The *Logout* link should now work again.  It was broken for trac >= 1.0.2.
+
+Large Refactor
+~~~~~~~~~~~~~~
+
+- Lots of code cleanup, including splitting of logic into several
+  components/classes, include:
+
   - ``AuthCookieManager``: for managing the trac authentication cookie
+
+  - ``UserDatabase``: for mapping between *OpenID identities* and trac
+    *authname*\s.
+
   - ``SessionHelper``: for searching and managing authenticated sessions
-  - ``Authenticator``: for handling the oidc flow
+
+  - ``Authenticator``: for handling the *OpenID Connect* flow
 
 0.1.2 (2015-06-20)
 ==================
