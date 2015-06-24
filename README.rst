@@ -195,8 +195,8 @@ Authors
     :target: https://pypi.python.org/pypi/trac-oidc/
     :alt: Latest Version
 .. |build status| image::
-    https://travis-ci.org/dairiki/trac-oidc.svg?branch=master
-    :target: https://travis-ci.org/dairiki/trac-oidc
+    https://travis-ci.org/trac-hacks/trac-oidc.svg?branch=master
+    :target: https://travis-ci.org/trac-hacks/trac-oidc
 .. |trac versions| image::
    https://img.shields.io/badge/trac-0.11%2C%200.12%2C%201.0%2C%201.1-blue.svg
    :target: http://trac.edgewall.org/
