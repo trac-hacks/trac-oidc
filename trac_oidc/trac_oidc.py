@@ -27,7 +27,7 @@ from .authenticator import (
     AuthenticationError,
     AuthenticationFailed,
     )
-from .compat import is_component_enabled, logout_link
+from .compat import db_query, is_component_enabled, logout_link
 
 
 class OidcPlugin(Component):
@@ -384,18 +384,16 @@ class SessionHelper(Component):
         """ Find an authenticated session which contain a specific attribute.
 
         """
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute(
-            "SELECT session.sid"
-            " FROM session"
-            " INNER JOIN session_attribute AS attr"
-            "                  USING(sid, authenticated)"
-            " WHERE session.authenticated=%s"
-            "       AND attr.name=%s AND attr.value=%s"
-            " ORDER BY session.last_visit DESC",
-            (1, attr_name, attr_value))
-        return [row[0] for row in cursor.fetchall()]
+        rows = db_query(self.env,
+                        "SELECT session.sid"
+                        " FROM session"
+                        " INNER JOIN session_attribute AS attr"
+                        "                  USING(sid, authenticated)"
+                        " WHERE session.authenticated=%s"
+                        "       AND attr.name=%s AND attr.value=%s"
+                        " ORDER BY session.last_visit DESC",
+                        (1, attr_name, attr_value))
+        return [row[0] for row in rows]
 
     def create_session(self, authname_base, attributes):
         """Create a new authenticated session.

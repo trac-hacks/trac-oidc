@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 
 from bs4 import BeautifulSoup
+import mock
 import pytest
 from trac.core import Component
 from trac.test import EnvironmentStub
@@ -54,3 +55,26 @@ def test_is_component_enabled():
     env = EnvironmentStub(enable=[DummyComponent2])
     assert not is_component_enabled(env, DummyComponent1)
     assert is_component_enabled(env, DummyComponent2)
+
+
+def test_db_query_v1():
+    from ..compat import _db_query_v1 as db_query
+    env = mock.Mock(name='env')
+    query = mock.sentinel.query
+    params = mock.sentinel.params
+    assert db_query(env, query, params) is env.db_query.return_value
+    assert env.mock_calls == [mock.call.db_query(query, params)]
+
+
+def test_db_query_v0():
+    from ..compat import _db_query_v0 as db_query
+    env = mock.Mock(name='env')
+    query = mock.sentinel.query
+    params = mock.sentinel.params
+    db = env.get_read_db.return_value
+    cursor = db.cursor.return_value
+    assert db_query(env, query, params) is cursor.fetchall.return_value
+    assert cursor.mock_calls == [
+        mock.call.execute(query, params),
+        mock.call.fetchall(),
+        ]

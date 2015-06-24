@@ -5,7 +5,10 @@ History
 Next Release
 ============
 
-No changes yet.
+Features
+~~~~~~~~
+
+- Tests now run under trac 1.1.5
 
 0.1.3 (2015-06-23)
 ==================

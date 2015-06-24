@@ -19,7 +19,7 @@ provider.
 
 Development takes place at http://github.com/dairiki/trac-oidc/.
 
-This plugin is tested with trac versions 0.11, 0.12 and 1.0.
+This plugin is tested with trac versions 0.11, 0.12, 1.0, and 1.1.
 
 .. _OpenId Connect: http://openid.net/connect/
 .. _trac: http://trac.edgewall.org/
@@ -193,5 +193,5 @@ Authors
     https://travis-ci.org/dairiki/trac-oidc.svg?branch=master
     :target: https://travis-ci.org/dairiki/trac-oidc
 .. |trac versions| image::
-    https://img.shields.io/badge/trac-0.11%2C%200.12%2C%201.0-blue.svg
-    :target: http://trac.edgewall.org/
+   https://img.shields.io/badge/trac-0.11%2C%200.12%2C%201.0%2C%201.1-blue.svg
+   :target: http://trac.edgewall.org/

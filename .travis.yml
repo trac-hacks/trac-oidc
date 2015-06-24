@@ -8,6 +8,8 @@ env:
   - TOXENV=py27-trac_0.11
   - TOXENV=py26-trac_0.12
   - TOXENV=py27-trac_0.12
+  - TOXENV=py26-trac_dev
+  - TOXENV=py27-trac_dev
   - TOXENV=cover
 install:
   - pip install tox
