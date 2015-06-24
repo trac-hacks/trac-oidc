@@ -2,8 +2,11 @@
 History
 *******
 
-Next Release
-============
+0.1.3 (2015-06-23)
+==================
+
+Behavioral Changes
+~~~~~~~~~~~~~~~~~~
 
 - In the "logged in as %(user)s" message (in the *metanav* menu),
   *user* is now always set to the *session id* or *authname* of the
