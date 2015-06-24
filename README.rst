@@ -1,6 +1,6 @@
-=========
-Trac-oidc
-=========
+===================================
+Trac-oidc — OpenID Connect for Trac
+===================================
 
 |version| |trac versions| |build status|
 
@@ -8,22 +8,34 @@ Trac-oidc
 Description
 ***********
 
-A plugin to support authentication to trac_ using `OpenID Connect`_.
+A plugin to support authentication to trac_ using the `OpenID
+Connect`_ protocol.  Currently this probably only works with
+Google_\’s *OpenID Provider*.
 
-This plugin is being written in a fire-drill mode since google has
-discontinued support for OpenID authentication and our trac is
-currently using TracAuthOpenId_ for authentication via google.
-
-Currently this probably only works with google as the authentication
-provider.
-
-Development takes place at http://github.com/dairiki/trac-oidc/.
+This plugin was written as a partial replacement for the
+TracAuthOpenId_, since Google has (as of mid-June, 2015) `discontinued
+support`_ for authentication using *OpenID 2.0*.
+Google’s extension_ for mapping *OpenID 2.0* identifiers to *OpenID
+Connect* identifiers is used, so sites which previously used
+``TracAuthOpenId`` for authentication against Google *should* be able
+to switch to using ``trac-oidc`` without losing track of user’s
+settings and permissions.
 
 This plugin is tested with trac versions 0.11, 0.12, 1.0, and 1.1.
 
-.. _OpenId Connect: http://openid.net/connect/
+The distribution may be downloaded from PyPI_.
+Development takes place at github_.
+
+
+.. _OpenID Connect: http://openid.net/connect/
 .. _trac: http://trac.edgewall.org/
 .. _TracAuthOpenId: https://pypi.python.org/pypi/TracAuthOpenId
+.. _google: https://developers.google.com/identity/protocols/OpenIDConnect
+.. _discontinued support: https://support.google.com/accounts/answer/6206245
+.. _extension:
+   https://developers.google.com/identity/protocols/OpenID2Migration#map-identifiers
+.. _pypi: https://pypi.python.org/pypi/trac-oidc
+.. _github: http://github.com/dairiki/trac-oidc/.
 
 *****
 Usage
@@ -32,7 +44,7 @@ Usage
 Obtain OAuth 2.0 Credentials
 ============================
 
-You must obtain *OAuth 2.0 credentials* from google before you can
+You must obtain *OAuth 2.0 credentials* from Google before you can
 use this plugin.
 
 1. Go to the `Google Developers Console`_.
@@ -80,11 +92,11 @@ Install the Plugin
 ==================
 
 The plugin is available from PyPI_, so it may be installed,
-e.g., using *pip*::
+e.g., using pip_::
 
       pip install trac-oidc
 
-.. _pypi: https://pypi.python.org/pypi/trac-oidc
+.. _pip: https://pip.pypa.io/en/stable/
 
 Configuration
 =============
@@ -127,10 +139,10 @@ In your ``trac.ini``::
   absolute_trust_root = false
 
 *****************************
-Migration from TracAuthOpenID
+Migration from TracAuthOpenId
 *****************************
 
-If you used **only** google as the authentication provider with
+If you used **only** Google as the authentication provider with
 TracAuthOpenId_, then you should be able to disable
 ``TracAuthOpenId``, configure and enable ``trac-oidc``, and things
 *should* just work — users should keep their sessions (i.e. they will
@@ -142,7 +154,7 @@ retain their settings and permissions.)
    whatever you were using with ``TracAuthOpenId``.
 
 If you were using multiple authentication providers with ``TracAuthOpenId``,
-it should be possible to run both ``TracAuthOpenId`` (with google disabled),
+it should be possible to run both ``TracAuthOpenId`` (with Google disabled),
 and ``trac-oidc`` together.  I have not tried this, however, and some tuning
 will probably be required.
 
@@ -155,18 +167,11 @@ Possible improvements.
 Generalize to work with more providers
 ======================================
 
-This could be generalized to work with other OpenID Connect providers,
-as well as other OAuth2-based (but non OpenID Connect) providers
-(e.g. Facebook, Twitter).
+Though, currently, only authentication via Google’s OP is supported,
+it should be straightforward to generalize the plugin to work with other
+*OpenID Connect* providers, and other authentication services based on
+*OAuth 2.0* (e.g. Twitter, Facebook.)
 
-Maybe using oic_ (rather than oauth2client_) would make this easier.
-(``Oic`` is rather sparsely documented, however.)
-
-Use ``preferred_username`` claim, when available, to determine the
-default authname for new accounts.
-
-.. _oic: https://pypi.python.org/pypi/oic
-.. _oauth2client: https://pypi.python.org/pypi/oauth2client
 
 Integrate with AccountManagerPlugin
 ===================================
