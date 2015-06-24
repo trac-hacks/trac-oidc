@@ -61,7 +61,7 @@ setup(
     license='Trac license (BSD-like)',
     author='Jeff Dairiki',
     author_email='dairiki@dairiki.org',
-    url='https://github.com/dairiki/trac-oidc',
+    url='https://github.com/trac-hacks/trac-oidc',
 
     packages=['trac_oidc'],
     include_package_data=True,

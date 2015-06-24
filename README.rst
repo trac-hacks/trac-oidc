@@ -35,7 +35,7 @@ Development takes place at github_.
 .. _extension:
    https://developers.google.com/identity/protocols/OpenID2Migration#map-identifiers
 .. _pypi: https://pypi.python.org/pypi/trac-oidc
-.. _github: http://github.com/dairiki/trac-oidc/.
+.. _github: http://github.com/trac-hacks/trac-oidc/.
 
 *****
 Usage
