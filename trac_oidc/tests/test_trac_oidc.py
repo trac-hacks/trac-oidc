@@ -139,7 +139,6 @@ class TestOidcPlugin(object):
         assert 'logged in as user1' in items['trac_oidc.login']
         assert 'Logout' in str(items['trac_oidc.logout'])
         assert '/trac_oidc/logout' in str(items['trac_oidc.logout'])
-        assert 'value="/foo?q=bar"' in str(items['trac_oidc.logout'])
 
     @pytest.mark.parametrize('path_info', [
         '/trac_oidc/login',

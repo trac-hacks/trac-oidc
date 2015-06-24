@@ -27,6 +27,7 @@ from .authenticator import (
     AuthenticationError,
     AuthenticationFailed,
     )
+from .compat import is_component_enabled, logout_link
 
 
 class OidcPlugin(Component):
@@ -51,11 +52,8 @@ class OidcPlugin(Component):
 
     def __init__(self):
         # We should show our own "Logout" link only if the stock
-        # LoginModule is disabled.  (Otherwise there will be two
-        # "Logout" links with equivalent functionality.)
-        # NB: We are using env.__getattr__ here, since trac 0.11
-        # doesn't have env.is_enabled.
-        self.show_logout_link = self.env[LoginModule] is None
+        # LoginModule is disabled.
+        self.show_logout_link = not is_component_enabled(self.env, LoginModule)
 
         self.userdb = UserDatabase(self.env)
 
@@ -65,31 +63,23 @@ class OidcPlugin(Component):
         return 'trac_oidc.login'
 
     def get_navigation_items(self, req):
+        oidc_href = req.href.trac_oidc
         path_qs = req.path_info
         if req.query_string:
             path_qs += '?' + req.query_string
 
         if not req.authname or req.authname == 'anonymous':
             # Not logged in, show login link
-            login_url = req.href.trac_oidc('login', return_to=path_qs)
-            login_link = tag.a(_('Login using Google'), href=login_url)
+            login_link = tag.a(_('Login using Google'),
+                               href=oidc_href('login', return_to=path_qs))
             yield 'metanav', 'trac_oidc.login', login_link
 
         elif self.show_logout_link:
             # Logged in and LoginModule is disabled, show logout link
-            logged_in_as = _('logged in as %(user)s', user=req.authname)
-            logout_url = req.href.trac_oidc('logout')
-            logout_form = tag.form(
-                tag.div(
-                    tag.input(type='hidden', name='return_to', value=path_qs),
-                    tag.button(_('Logout'), name='logout', type='submit')
-                    ),
-                action=logout_url,
-                id='logout',
-                class_='trac-logout'
-                )
-            yield 'metanav', 'trac_oidc.login', logged_in_as
-            yield 'metanav', 'trac_oidc.logout', logout_form
+            yield ('metanav', 'trac_oidc.login',
+                   _('logged in as %(user)s', user=req.authname))
+            yield ('metanav', 'trac_oidc.logout',
+                   logout_link(oidc_href, return_to=path_qs))
 
     # IRequestHandler methods
 

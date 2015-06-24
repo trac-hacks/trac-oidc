@@ -124,7 +124,7 @@ def test_app(env, request):
 
 def is_logged_in(resp):
     # trac < 1.0.2 uses logout link
-    logout_link = resp.html.find('a', href=re.compile(r'/logout\Z'))
+    logout_link = resp.html.find('a', href=re.compile(r'/logout(\Z|\?)'))
     if logout_link:
         assert 'Logout' in logout_link
         return True
