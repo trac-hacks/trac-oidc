@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-
+#
+# Copyright (C) 2015 Geoffrey T. Dairiki
+#
 import os
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-VERSION = '0.1.5.dev0'
+VERSION = '0.1.4'
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()

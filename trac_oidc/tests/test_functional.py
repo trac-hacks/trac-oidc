@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Geoffrey T. Dairiki
+#
 """ Functional tests
 """
 from __future__ import absolute_import

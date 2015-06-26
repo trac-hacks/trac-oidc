@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Geoffrey T. Dairiki
+#
 """ A plugin to support trac authentication using google's *OpenID
 Connect* provider.
 
