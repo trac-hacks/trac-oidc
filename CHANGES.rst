@@ -22,10 +22,10 @@ Behavioral Changes
 ~~~~~~~~~~~~~~~~~~
 
 - In the "logged in as %(user)s" message (in the *metanav* menu),
-  *user* is now always set to the *session id* or *authname* of the
-  logged-in user.  Previously the real name of the user was shown
-  instead, when it was available.  This now matches the behavior of
-  the stock ``LoginModule`` component.
+  *user* is now always set to the *session id* (also referred to as the
+  *authname*) of the logged-in user.  Previously the real name of the
+  user was shown instead, when it was available.  This now matches the
+  behavior of the stock ``LoginModule`` component.
 
 Bugs Fixed
 ~~~~~~~~~~
