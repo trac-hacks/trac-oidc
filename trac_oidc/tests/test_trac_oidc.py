@@ -23,13 +23,16 @@ from ..authenticator import AuthenticationError, AuthenticationFailed
 
 
 @pytest.fixture
-def disable_components():
-    return None
+def disable_loginmodule():
+    return False
 
 
 @pytest.fixture
-def env(disable_components):
-    return EnvironmentStub(disable=disable_components)
+def env(disable_loginmodule):
+    if disable_loginmodule:
+        return EnvironmentStub(enable=['trac_oidc.*'])
+    else:
+        return EnvironmentStub()
 
 
 def dummy_request(env, cookies_from=None, query=None):
@@ -165,8 +168,7 @@ class TestOidcPlugin(object):
         req.environ['PATH_INFO'] = path_info
         assert not plugin.match_request(req)
 
-    @pytest.mark.parametrize('disable_components',
-                             [['trac.web.auth.LoginModule']])
+    @pytest.mark.parametrize('disable_loginmodule', [True])
     def test_match_request_login_module_disabled(self, plugin, req):
         req.environ['PATH_INFO'] = '/login'
         assert plugin.match_request(req)
