@@ -87,8 +87,13 @@ class OidcPlugin(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return req.path_info in ('/trac_oidc/login', '/trac_oidc/logout',
-                                 '/trac_oidc/redirect')
+        path_info = req.path_info
+        if path_info == '/login' and self.show_logout_link:
+            # Stock LoginModule is disabled, so handle default /login too
+            return True
+        return path_info in ('/trac_oidc/login',
+                             '/trac_oidc/logout',
+                             '/trac_oidc/redirect')
 
     def process_request(self, req):
         if req.path_info.endswith('/logout'):

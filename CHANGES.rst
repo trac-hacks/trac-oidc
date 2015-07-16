@@ -5,7 +5,8 @@ History
 Next Release
 ============
 
-No changes yet.
+- If the stock ``trac.web.auth.LoginModule`` is disabled, then handle
+  requests for ``/login`` too (because no one else is going to.)
 
 0.1.4 (2015-06-24)
 ==================
